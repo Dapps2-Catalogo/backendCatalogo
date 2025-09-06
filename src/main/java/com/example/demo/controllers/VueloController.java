@@ -1,7 +1,6 @@
 package com.example.demo.controllers;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.web.PageableDefault;
@@ -59,6 +58,27 @@ public class VueloController {
     @ResponseStatus(HttpStatus.OK)
     public Vuelo updateVuelo(@PathVariable Integer id, @RequestBody Vuelo request) {
         return vueloService.updateVuelo(id, request);
+    }
+
+
+
+
+    @GetMapping("/rango")
+    @ResponseStatus(HttpStatus.OK)
+    public Page<Vuelo> buscarVuelosPorRango(
+            @RequestParam String origen,
+            @RequestParam String destino,
+            @RequestParam String fechaDesde,   // ISO yyyy-MM-dd
+            @RequestParam String fechaHasta,   // ISO yyyy-MM-dd
+            @PageableDefault(size = 8, sort = "horaDespegueUtc") Pageable pageable
+    ) {
+        return vueloService.buscarPorRango(
+                origen,
+                destino,
+                LocalDate.parse(fechaDesde),
+                LocalDate.parse(fechaHasta),
+                pageable
+        );
     }
     
 

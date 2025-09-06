@@ -7,9 +7,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
 
 import com.example.demo.auxiliar.EstadoVuelo;
 
@@ -58,6 +57,19 @@ public class Vuelo {
   @Enumerated(EnumType.STRING)
   @Column(name = "estado_vuelo", length = 16, nullable = false)
   private EstadoVuelo estadoVuelo = EstadoVuelo.CONFIRMADO;
+
+
+  //nuevos campos
+  @Column(name = "capacidad_avion", nullable = false)
+  private Integer capacidadAvion;  // total de asientos
+
+  @Column(name = "porcentaje_primera", precision = 5, scale = 2, nullable = false)
+  private BigDecimal porcentajePrimera;   // ej 10.00 = 10%
+
+  @Column(name = "porcentaje_bussiness", precision = 5, scale = 2, nullable = false)
+  private BigDecimal porcentajeBussiness; // ej 20.00 = 20%
+  //----------
+
 
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "vuelo_asientos", joinColumns = @JoinColumn(name = "vuelo_id"))

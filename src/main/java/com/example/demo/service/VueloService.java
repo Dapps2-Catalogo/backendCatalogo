@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.auxiliar.EstadoVuelo;
 import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.exceptions.ConflictException;
 import com.example.demo.models.Vuelo;
@@ -56,6 +57,16 @@ public class VueloService {
                 .orElseThrow(() -> new BadRequestException("Vuelo no encontrado con id " + id));
 
         validarCamposEditables(request);
+
+        // <<< Regla: si está CANCELADO, no se puede volver atrás
+        if (actual.getEstadoVuelo() == EstadoVuelo.CANCELADO) {
+            // si intentan cambiar el estado a algo distinto de CANCELADO, lo bloqueamos
+            if (request.getEstadoVuelo() != null && request.getEstadoVuelo() != EstadoVuelo.CANCELADO) {
+                throw new ConflictException("El vuelo ya está CANCELADO y no puede cambiar de estado");
+            }
+            // (opcional) bloquear cualquier edición de otros campos:
+            throw new ConflictException("El vuelo está CANCELADO y no admite modificaciones");
+        }
 
         // si cambian idVuelo o fecha, chequeá conflicto con otro registro
         boolean cambiaClave = (request.getIdVuelo() != null && !request.getIdVuelo().equals(actual.getIdVuelo()))
@@ -110,6 +121,42 @@ public class VueloService {
 
         return vueloRepository.findByOrigenAndDestinoAndFecha(
                 origen.toUpperCase(), destino.toUpperCase(), fecha, pageable);
+    }
+
+
+
+
+
+
+
+
+
+
+
+    public Page<Vuelo> buscarPorRango(
+            String origen,
+            String destino,
+            LocalDate fechaDesde,
+            LocalDate fechaHasta,
+            Pageable pageable
+    ) {
+        if (origen == null || destino == null || fechaDesde == null || fechaHasta == null) {
+            throw new BadRequestException("origen, destino, fechaDesde y fechaHasta son obligatorios");
+        }
+        if (origen.length() != 3 || destino.length() != 3) {
+            throw new BadRequestException("Origen/Destino deben ser códigos IATA de 3 letras");
+        }
+        if (fechaDesde.isAfter(fechaHasta)) {
+            throw new BadRequestException("fechaDesde no puede ser posterior a fechaHasta");
+        }
+
+        return vueloRepository.findByOrigenAndDestinoAndFechaBetween(
+                origen.toUpperCase(),
+                destino.toUpperCase(),
+                fechaDesde,
+                fechaHasta,
+                pageable
+        );
     }
     
 
