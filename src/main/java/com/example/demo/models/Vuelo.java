@@ -62,7 +62,9 @@ public class Vuelo {
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "vuelo_asientos", joinColumns = @JoinColumn(name = "vuelo_id"))
   @Column(name = "asiento", length = 4, nullable = false)
+  @OrderColumn(name = "orden")              // <— clave para listas
   private List<String> disponibilidad = new ArrayList<>();
+
 
 }
 
