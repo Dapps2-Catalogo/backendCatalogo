@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.exceptions.BadRequestException;
@@ -95,6 +97,19 @@ public class VueloService {
             throw new BadRequestException("La fecha de búsqueda no puede ser anterior a hoy");
         }
         return vueloRepository.findByOrigenAndDestinoAndFecha(origen.toUpperCase(), destino.toUpperCase(), fecha);
+    }
+
+
+    public Page<Vuelo> findByOrigenAndDestinoAndFecha(String origen, String destino, LocalDate fecha, Pageable pageable) {
+        if (origen == null || destino == null || fecha == null)
+            throw new BadRequestException("Parámetros origen, destino y fecha son obligatorios");
+        if (origen.length() != 3 || destino.length() != 3)
+            throw new BadRequestException("Origen/Destino deben ser códigos IATA (3 letras)");
+        // opcional: bloquear pasado
+        // if (fecha.isBefore(LocalDate.now())) throw new BadRequestException("Fecha no puede ser pasada");
+
+        return vueloRepository.findByOrigenAndDestinoAndFecha(
+                origen.toUpperCase(), destino.toUpperCase(), fecha, pageable);
     }
     
 

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,8 @@ import com.example.demo.service.VueloService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 
 @RestController
@@ -30,12 +33,13 @@ public class VueloController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<Vuelo> buscarVuelos(
+    public Page<Vuelo> buscarVuelos(
             @RequestParam String origen,
             @RequestParam String destino,
-            @RequestParam String fecha) {
-        return vueloService.findByOrigenAndDestinoAndFecha(
-                origen, destino, LocalDate.parse(fecha));
+            @RequestParam String fecha,
+            @PageableDefault(size = 8, sort = "horaDespegueUtc") Pageable pageable
+    ) {
+        return vueloService.findByOrigenAndDestinoAndFecha(origen, destino, LocalDate.parse(fecha), pageable);
     }
 
     @PostMapping
