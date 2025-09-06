@@ -6,7 +6,9 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.example.demo.auxiliar.EstadoVuelo;
@@ -57,10 +59,10 @@ public class Vuelo {
   @Column(name = "estado_vuelo", length = 16, nullable = false)
   private EstadoVuelo estadoVuelo = EstadoVuelo.CONFIRMADO;
 
-  // Asientos disponibles tipo "1A","1B",...
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "vuelo_asientos", joinColumns = @JoinColumn(name = "vuelo_id"))
   @Column(name = "asiento", length = 4, nullable = false)
-  private Set<String> disponibilidad = new HashSet<>();
+  private List<String> disponibilidad = new ArrayList<>();
+
 }
 
