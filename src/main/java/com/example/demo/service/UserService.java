@@ -4,10 +4,7 @@ import java.util.List;
 
 import com.example.demo.exceptions.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.example.demo.auxiliar.LoginRequest;
 import com.example.demo.auxiliar.LoginResponse;
 import com.example.demo.auxiliar.RegisterRequest;
