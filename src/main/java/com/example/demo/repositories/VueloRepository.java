@@ -2,6 +2,7 @@ package com.example.demo.repositories;
 
 import com.example.demo.models.Vuelo;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -11,7 +12,7 @@ import org.springframework.data.domain.Pageable;
 
 
 
-public interface VueloRepository extends JpaRepository<Vuelo, Integer> {
+public interface VueloRepository extends JpaRepository<Vuelo, Integer> , JpaSpecificationExecutor<Vuelo>{
     
     List<Vuelo> findByOrigenAndDestinoAndFecha(String origen, String destino, LocalDate fecha);
 

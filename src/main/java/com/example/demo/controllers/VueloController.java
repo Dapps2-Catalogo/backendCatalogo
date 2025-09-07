@@ -1,9 +1,11 @@
 package com.example.demo.controllers;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -79,6 +81,22 @@ public class VueloController {
                 LocalDate.parse(fechaHasta),
                 pageable
         );
+    }
+
+
+
+    @GetMapping("/search")
+    public Page<Vuelo> search(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+            @RequestParam(required = false) String aerolinea,
+            @RequestParam(required = false) String origen,
+            @RequestParam(required = false) String destino,
+            @RequestParam(required = false) BigDecimal precioMin,
+            @RequestParam(required = false) BigDecimal precioMax,
+            Pageable pageable
+    ) {
+        return vueloService.buscarVuelosPaginado(fechaDesde, fechaHasta, aerolinea, origen, destino, precioMin, precioMax, pageable);
     }
     
 

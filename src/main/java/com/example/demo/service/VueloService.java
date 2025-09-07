@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.auxiliar.EstadoVuelo;
@@ -15,7 +16,6 @@ import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.exceptions.ConflictException;
 import com.example.demo.models.Vuelo;
 import com.example.demo.repositories.VueloRepository;
-
 import jakarta.transaction.Transactional;
 
 @Service
@@ -158,6 +158,58 @@ public class VueloService {
                 pageable
         );
     }
+
+
+
+
+
+
+
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public Page<Vuelo> buscarVuelosPaginado(
+            LocalDate fechaDesde,
+            LocalDate fechaHasta,
+            String aerolinea,
+            String origen,
+            String destino,
+            BigDecimal precioMin,
+            BigDecimal precioMax,
+            Pageable pageable
+    ) {
+        String aerolineaNorm = nullIfBlank(aerolinea);
+        String origenNorm    = nullIfBlank(origen);
+        String destinoNorm   = nullIfBlank(destino);
+
+        if (fechaDesde != null && fechaHasta != null && fechaDesde.isAfter(fechaHasta))
+            throw new BadRequestException("fechaDesde no puede ser posterior a fechaHasta");
+        if (origenNorm != null && origenNorm.length() != 3)
+            throw new BadRequestException("origen debe ser código IATA de 3 letras");
+        if (destinoNorm != null && destinoNorm.length() != 3)
+            throw new BadRequestException("destino debe ser código IATA de 3 letras");
+        if (precioMin != null && precioMax != null && precioMin.compareTo(precioMax) > 0)
+            throw new BadRequestException("precioMin no puede ser mayor que precioMax");
+
+        // 👇 clave: forzar el tipo genérico
+        Specification<Vuelo> spec = Specification.<Vuelo>where(null)
+            .and((root, cq, cb) -> {
+                if (fechaDesde == null && fechaHasta == null) return null;
+                var path = root.<LocalDate>get("fecha");
+                if (fechaDesde != null && fechaHasta != null) return cb.between(path, fechaDesde, fechaHasta);
+                if (fechaDesde != null) return cb.greaterThanOrEqualTo(path, fechaDesde);
+                return cb.lessThanOrEqualTo(path, fechaHasta);
+            })
+            .and(ciLike("aerolinea", aerolineaNorm))
+            .and((root, cq, cb) -> origenNorm == null ? null :
+                    cb.equal(cb.upper(root.get("origen")), origenNorm.toUpperCase()))
+            .and((root, cq, cb) -> destinoNorm == null ? null :
+                    cb.equal(cb.upper(root.get("destino")), destinoNorm.toUpperCase()))
+            .and((root, cq, cb) -> precioMin == null ? null :
+                    cb.greaterThanOrEqualTo(root.get("precio"), precioMin))
+            .and((root, cq, cb) -> precioMax == null ? null :
+                    cb.lessThanOrEqualTo(root.get("precio"), precioMax));
+
+        return vueloRepository.findAll(spec, pageable);
+    }
     
 
 
@@ -213,5 +265,19 @@ public class VueloService {
 
     private boolean menorQueCero(BigDecimal n) {
         return n.compareTo(BigDecimal.ZERO) < 0;
+    }
+
+
+
+
+    private static String nullIfBlank(String s) {
+        return (s == null || s.isBlank()) ? null : s.trim();
+    }
+
+    private static Specification<Vuelo> ciLike(String field, String value) {
+        return (root, cq, cb) -> {
+            if (value == null) return null;
+            return cb.like(cb.lower(root.get(field)), "%" + value.toLowerCase() + "%");
+        };
     }
 }
