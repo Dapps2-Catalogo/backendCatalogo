@@ -6,8 +6,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
+
 
 
 import com.example.demo.auxiliar.EstadoVuelo;
@@ -68,14 +67,19 @@ public class Vuelo {
 
   @Column(name = "porcentaje_bussiness", precision = 5, scale = 2, nullable = false)
   private BigDecimal porcentajeBussiness; // ej 20.00 = 20%
+
+  @Column(name = "tipo_avion", nullable = false)
+  private String tipoAvion; // ej "Boeing 737"
   //----------
 
-
+  /* 
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "vuelo_asientos", joinColumns = @JoinColumn(name = "vuelo_id"))
   @Column(name = "asiento", length = 4, nullable = false)
   @OrderColumn(name = "orden")              // <— clave para listas
   private List<String> disponibilidad = new ArrayList<>();
+
+  */
 
 
 }

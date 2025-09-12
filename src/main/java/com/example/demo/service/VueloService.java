@@ -2,7 +2,6 @@ package com.example.demo.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,10 +32,12 @@ public class VueloService {
         // normalizaciones mínimas
         vuelo.setOrigen(vuelo.getOrigen().toUpperCase());
         vuelo.setDestino(vuelo.getDestino().toUpperCase());
+        /* 
         if (vuelo.getDisponibilidad() == null) {
             vuelo.setDisponibilidad(Collections.emptyList());
         }
 
+        */
 
         // conflicto: mismo idVuelo + fecha
         if (vueloRepository.existsByIdVueloAndFecha(vuelo.getIdVuelo(), vuelo.getFecha())) {
@@ -92,7 +93,8 @@ public class VueloService {
         if (request.getHoraDespegueUtc() != null) actual.setHoraDespegueUtc(request.getHoraDespegueUtc());
         if (request.getHoraAterrizajeLocal() != null) actual.setHoraAterrizajeLocal(request.getHoraAterrizajeLocal());
         if (request.getEstadoVuelo() != null) actual.setEstadoVuelo(request.getEstadoVuelo());
-        if (request.getDisponibilidad() != null) actual.setDisponibilidad(request.getDisponibilidad());
+        if (request.getTipoAvion() != null) actual.setTipoAvion(request.getTipoAvion());
+        //if (request.getDisponibilidad() != null) actual.setDisponibilidad(request.getDisponibilidad());
 
         return vueloRepository.save(actual);
     }
