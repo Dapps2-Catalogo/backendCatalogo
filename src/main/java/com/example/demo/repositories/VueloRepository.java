@@ -30,4 +30,5 @@ public interface VueloRepository extends JpaRepository<Vuelo, Integer> , JpaSpec
             LocalDate fechaHasta,
             Pageable pageable
     );
+    boolean existsByIdVuelo(String idVuelo);
 }

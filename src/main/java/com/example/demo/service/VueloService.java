@@ -27,7 +27,9 @@ public class VueloService {
     @Transactional
     public Vuelo createVuelo(Vuelo vuelo) {
         validarNuevoVuelo(vuelo);
-
+        if (vueloRepository.existsByIdVuelo(vuelo.getIdVuelo())) {
+            throw new ConflictException("Ya existe un vuelo con id " + vuelo.getIdVuelo());
+        }
         // normalizaciones mínimas
         vuelo.setOrigen(vuelo.getOrigen().toUpperCase());
         vuelo.setDestino(vuelo.getDestino().toUpperCase());
