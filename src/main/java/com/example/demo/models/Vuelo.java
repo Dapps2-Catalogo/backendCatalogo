@@ -61,13 +61,13 @@ public class Vuelo {
   //nuevos campos
   @Column(name = "capacidad_avion", nullable = false)
   private Integer capacidadAvion;  // total de asientos
-
+  /* 
   @Column(name = "porcentaje_primera", precision = 5, scale = 2, nullable = false)
   private BigDecimal porcentajePrimera;   // ej 10.00 = 10%
 
   @Column(name = "porcentaje_bussiness", precision = 5, scale = 2, nullable = false)
   private BigDecimal porcentajeBussiness; // ej 20.00 = 20%
-
+  */  
   @Column(name = "tipo_avion", nullable = false)
   private String tipoAvion; // ej "Boeing 737"
   //----------
