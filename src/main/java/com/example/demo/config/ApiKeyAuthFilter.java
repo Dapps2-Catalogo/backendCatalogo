@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-
 @Component
 public class ApiKeyAuthFilter extends OncePerRequestFilter {
 
@@ -33,6 +32,12 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
+
+        // ⚠️ Dejar pasar preflight sin validar
+        if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
+            chain.doFilter(req, res);
+            return;
+        }
 
         String apiKey = req.getHeader(HEADER);
 
@@ -52,4 +57,5 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         chain.doFilter(req, res);
     }
 }
+
 
