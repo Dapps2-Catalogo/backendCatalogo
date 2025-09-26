@@ -6,7 +6,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import lombok.Data;
+
 
 
 import com.example.demo.auxiliar.EstadoVuelo;
