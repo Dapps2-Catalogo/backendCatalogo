@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -60,7 +59,7 @@ public class VueloServiceTest {
     @Test
     void testCreateVuelo_Success() {
         when(vueloRepository.existsByIdVuelo(anyString())).thenReturn(false);
-    when(vueloRepository.existsByIdVueloAndFecha(anyString(), any(LocalDate.class))).thenReturn(false);
+        when(vueloRepository.existsByIdVueloAndDespegue(anyString(), any(OffsetDateTime.class))).thenReturn(false);
         when(vueloRepository.save(any(Vuelo.class))).thenReturn(vuelo);
 
         Vuelo createdVuelo = vueloService.createVuelo(vuelo);
@@ -82,9 +81,9 @@ public class VueloServiceTest {
     }
     
     @Test
-    void testCreateVuelo_ConflictByIdAndFecha() {
+    void testCreateVuelo_ConflictByIdAndDespegue() {
         when(vueloRepository.existsByIdVuelo(anyString())).thenReturn(false);
-        when(vueloRepository.existsByIdVueloAndFecha(anyString(), any(LocalDate.class))).thenReturn(true);
+        when(vueloRepository.existsByIdVueloAndDespegue(anyString(), any(OffsetDateTime.class))).thenReturn(true);
 
         assertThrows(ConflictException.class, () -> {
             vueloService.createVuelo(vuelo);
@@ -159,19 +158,22 @@ public class VueloServiceTest {
         String origen = "MAD";
         String destino = "EZE";
         LocalDate fecha = LocalDate.now().plusDays(1);
-        when(vueloRepository.findByOrigenAndDestinoAndFecha(origen, destino, fecha)).thenReturn(Arrays.asList(vuelo));
+        Pageable pageable = Pageable.unpaged();
+        Page<Vuelo> page = new PageImpl<>(Arrays.asList(vuelo));
+        when(vueloRepository.findByOrigenAndDestinoAndDespegueBetween(eq(origen), eq(destino), any(OffsetDateTime.class), any(OffsetDateTime.class), eq(pageable)))
+                .thenReturn(page);
 
-        List<Vuelo> vuelos = vueloService.findByOrigenAndDestinoAndFecha(origen, destino, fecha);
+        Page<Vuelo> vuelos = vueloService.findByOrigenAndDestinoAndFecha(origen, destino, fecha, pageable);
 
         assertNotNull(vuelos);
-        assertEquals(1, vuelos.size());
-        verify(vueloRepository, times(1)).findByOrigenAndDestinoAndFecha(origen, destino, fecha);
+        assertEquals(1, vuelos.getTotalElements());
+        verify(vueloRepository, times(1)).findByOrigenAndDestinoAndDespegueBetween(eq(origen), eq(destino), any(OffsetDateTime.class), any(OffsetDateTime.class), eq(pageable));
     }
 
     @Test
     void testFindByOrigenAndDestinoAndFecha_BadRequest() {
         assertThrows(BadRequestException.class, () -> {
-            vueloService.findByOrigenAndDestinoAndFecha(null, "EZE", LocalDate.now());
+            vueloService.findByOrigenAndDestinoAndFecha(null, "EZE", LocalDate.now(), Pageable.unpaged());
         });
     }
 
@@ -180,7 +182,7 @@ public class VueloServiceTest {
     void testBuscarVuelosPaginado() {
         Pageable pageable = Pageable.unpaged();
         Page<Vuelo> page = new PageImpl<>(Arrays.asList(vuelo));
-    when(vueloRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
+        when(vueloRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
         Page<Vuelo> result = vueloService.buscarVuelosPaginado(LocalDate.now(), LocalDate.now().plusDays(2), "Iberia", "MAD", "EZE", null, null, pageable);
 
@@ -227,7 +229,7 @@ public class VueloServiceTest {
         request.setIdVuelo("IB456"); // Intentamos cambiar a un ID que ya existe en esa fecha
 
         when(vueloRepository.findById(1)).thenReturn(Optional.of(vuelo));
-    when(vueloRepository.findByIdVueloAndFecha("IB456", vuelo.getDespegue().toLocalDate())).thenReturn(Optional.of(otroVuelo));
+        when(vueloRepository.findByIdVueloAndDespegue("IB456", vuelo.getDespegue())).thenReturn(Optional.of(otroVuelo));
 
         assertThrows(ConflictException.class, () -> {
             vueloService.updateVuelo(1, request);
