@@ -27,7 +27,7 @@ public class Vuelo {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
-  @Column(name = "id_vuelo", length = 10, nullable = false, unique = true)
+  @Column(name = "id_vuelo", length = 10, nullable = false, unique = false)
   private String idVuelo;
 
   @Column(name = "aerolinea", length = 50, nullable = false)
