@@ -3,6 +3,9 @@ package com.example.demo.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,9 +20,16 @@ import com.example.demo.models.Vuelo;
 import com.example.demo.repositories.VueloRepository;
 import jakarta.transaction.Transactional;
 
+
+
 @Service
 public class VueloService {
-
+    private static OffsetDateTime startOfDayUtc(LocalDate d) {
+        return d.atStartOfDay().atOffset(ZoneOffset.UTC);
+    }
+    private static OffsetDateTime nextDayUtc(LocalDate d) {
+        return d.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+    }
     @Autowired
     VueloRepository vueloRepository;
 
@@ -40,7 +50,7 @@ public class VueloService {
         */
 
         // conflicto: mismo idVuelo + fecha
-        if (vueloRepository.existsByIdVueloAndFecha(vuelo.getIdVuelo(), vuelo.getDespegue().toLocalDate())) {
+        if (vueloRepository.existsByIdVueloAndDespegue(vuelo.getIdVuelo(), vuelo.getDespegue())) {
             throw new ConflictException("Ya existe un vuelo con ese id_vuelo en esa fecha");
         }
 
@@ -76,8 +86,8 @@ public class VueloService {
                            || (request.getDespegue() != null && !request.getDespegue().equals(actual.getDespegue()));
         if (cambiaClave) {
             String nuevoIdVuelo = request.getIdVuelo() != null ? request.getIdVuelo() : actual.getIdVuelo();
-            LocalDate nuevaFecha = request.getDespegue() != null ? request.getDespegue().toLocalDate() : actual.getDespegue().toLocalDate();
-            var choque = vueloRepository.findByIdVueloAndFecha(nuevoIdVuelo, nuevaFecha);
+            OffsetDateTime nuevaFecha = request.getDespegue() != null ? request.getDespegue() : actual.getDespegue();
+            var choque = vueloRepository.findByIdVueloAndDespegue(nuevoIdVuelo, nuevaFecha);
             if (choque.isPresent() && !choque.get().getId().equals(id)) {
                 throw new ConflictException("Otro vuelo ya usa ese id_vuelo y fecha");
             }
@@ -93,38 +103,35 @@ public class VueloService {
         if (request.getAterrizajeLocal() != null) actual.setAterrizajeLocal(request.getAterrizajeLocal());
         if (request.getEstadoVuelo() != null) actual.setEstadoVuelo(request.getEstadoVuelo());
         if (request.getTipoAvion() != null) actual.setTipoAvion(request.getTipoAvion());
+        if (request.getCapacidadAvion() != null) actual.setCapacidadAvion(request.getCapacidadAvion());
+        if (request.getMoneda() != null) actual.setMoneda(request.getMoneda());
+        
         //if (request.getDisponibilidad() != null) actual.setDisponibilidad(request.getDisponibilidad());
 
         return vueloRepository.save(actual);
     }
 
     @Transactional(Transactional.TxType.SUPPORTS)
-    public List<Vuelo> findByOrigenAndDestinoAndFecha(String origen, String destino, LocalDate fecha) {
-        if (origen == null || destino == null || fecha == null) {
-            throw new BadRequestException("Parámetros origen, destino y fecha son obligatorios");
-        }
-        if (origen.length() != 3 || destino.length() != 3) {
-            throw new BadRequestException("Origen y destino deben ser códigos IATA de 3 letras");
-        }
-        // si no querés restringir búsquedas a futuro, quitá este check
-        if (fecha.isBefore(LocalDate.now())) {
-            throw new BadRequestException("La fecha de búsqueda no puede ser anterior a hoy");
-        }
-        return vueloRepository.findByOrigenAndDestinoAndFecha(origen.toUpperCase(), destino.toUpperCase(), fecha);
-    }
-
-
     public Page<Vuelo> findByOrigenAndDestinoAndFecha(String origen, String destino, LocalDate fecha, Pageable pageable) {
         if (origen == null || destino == null || fecha == null)
             throw new BadRequestException("Parámetros origen, destino y fecha son obligatorios");
         if (origen.length() != 3 || destino.length() != 3)
-            throw new BadRequestException("Origen/Destino deben ser códigos IATA (3 letras)");
-        // opcional: bloquear pasado
-        // if (fecha.isBefore(LocalDate.now())) throw new BadRequestException("Fecha no puede ser pasada");
+            throw new BadRequestException("Origen y destino deben ser códigos IATA de 3 letras");
+        if (fecha.isBefore(LocalDate.now()))
+            throw new BadRequestException("La fecha de búsqueda no puede ser anterior a hoy");
 
-        return vueloRepository.findByOrigenAndDestinoAndFecha(
-                origen.toUpperCase(), destino.toUpperCase(), fecha, pageable);
+        OffsetDateTime desde = startOfDayUtc(fecha);
+        OffsetDateTime hasta = nextDayUtc(fecha);
+
+        return vueloRepository.findByOrigenAndDestinoAndDespegueBetween(
+                origen.toUpperCase(),
+                destino.toUpperCase(),
+                desde,
+                hasta,
+                pageable
+        );
     }
+
 
 
 
@@ -137,11 +144,11 @@ public class VueloService {
 
 
     public Page<Vuelo> buscarPorRango(
-            String origen,
-            String destino,
-            LocalDate fechaDesde,
-            LocalDate fechaHasta,
-            Pageable pageable
+        String origen,
+        String destino,
+        LocalDate fechaDesde,
+        LocalDate fechaHasta,
+        Pageable pageable
     ) {
         if (origen == null || destino == null || fechaDesde == null || fechaHasta == null) {
             throw new BadRequestException("origen, destino, fechaDesde y fechaHasta son obligatorios");
@@ -153,14 +160,18 @@ public class VueloService {
             throw new BadRequestException("fechaDesde no puede ser posterior a fechaHasta");
         }
 
-        return vueloRepository.findByOrigenAndDestinoAndFechaBetween(
+        OffsetDateTime desde = startOfDayUtc(fechaDesde);
+        OffsetDateTime hasta = nextDayUtc(fechaHasta);
+
+        return vueloRepository.findByOrigenAndDestinoAndDespegueBetween(
                 origen.toUpperCase(),
                 destino.toUpperCase(),
-                fechaDesde,
-                fechaHasta,
+                desde,
+                hasta,
                 pageable
         );
     }
+
 
 
 

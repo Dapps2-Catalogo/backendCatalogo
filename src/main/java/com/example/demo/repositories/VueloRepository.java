@@ -1,34 +1,32 @@
 package com.example.demo.repositories;
 
 import com.example.demo.models.Vuelo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
+public interface VueloRepository extends JpaRepository<Vuelo, Integer>, JpaSpecificationExecutor<Vuelo> {
 
+    boolean existsByIdVuelo(String idVuelo);
 
-public interface VueloRepository extends JpaRepository<Vuelo, Integer> , JpaSpecificationExecutor<Vuelo>{
+    // Unicidad compuesta (id_vuelo, despegue)
+    boolean existsByIdVueloAndDespegue(String idVuelo, OffsetDateTime despegue);
+    Optional<Vuelo> findByIdVueloAndDespegue(String idVuelo, OffsetDateTime despegue);
+
     
-    List<Vuelo> findByOrigenAndDestinoAndFecha(String origen, String destino, LocalDate fecha);
 
-    boolean existsByIdVueloAndFecha(String idVuelo, LocalDate fecha);
-
-    Optional<Vuelo> findByIdVueloAndFecha(String idVuelo, LocalDate fecha);
-
-    Page<Vuelo> findByOrigenAndDestinoAndFecha(String origen, String destino, LocalDate fecha, Pageable pageable);
-
-
-    Page<Vuelo> findByOrigenAndDestinoAndFechaBetween(
+    // Búsqueda por rango de despegue (usar para “por fecha” convirtiendo a [00:00, 24:00))
+    Page<Vuelo> findByOrigenAndDestinoAndDespegueBetween(
             String origen,
             String destino,
-            LocalDate fechaDesde,
-            LocalDate fechaHasta,
+            OffsetDateTime desdeInclusive,
+            OffsetDateTime hastaExclusive,
             Pageable pageable
     );
-    boolean existsByIdVuelo(String idVuelo);
 }
+
