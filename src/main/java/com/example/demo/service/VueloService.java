@@ -40,7 +40,7 @@ public class VueloService {
         */
 
         // conflicto: mismo idVuelo + fecha
-        if (vueloRepository.existsByIdVueloAndFecha(vuelo.getIdVuelo(), vuelo.getFecha())) {
+        if (vueloRepository.existsByIdVueloAndFecha(vuelo.getIdVuelo(), vuelo.getDespegue().toLocalDate())) {
             throw new ConflictException("Ya existe un vuelo con ese id_vuelo en esa fecha");
         }
 
@@ -73,10 +73,10 @@ public class VueloService {
 
         // si cambian idVuelo o fecha, chequeá conflicto con otro registro
         boolean cambiaClave = (request.getIdVuelo() != null && !request.getIdVuelo().equals(actual.getIdVuelo()))
-                           || (request.getFecha() != null && !request.getFecha().equals(actual.getFecha()));
+                           || (request.getDespegue() != null && !request.getDespegue().equals(actual.getDespegue()));
         if (cambiaClave) {
             String nuevoIdVuelo = request.getIdVuelo() != null ? request.getIdVuelo() : actual.getIdVuelo();
-            LocalDate nuevaFecha = request.getFecha() != null ? request.getFecha() : actual.getFecha();
+            LocalDate nuevaFecha = request.getDespegue() != null ? request.getDespegue().toLocalDate() : actual.getDespegue().toLocalDate();
             var choque = vueloRepository.findByIdVueloAndFecha(nuevoIdVuelo, nuevaFecha);
             if (choque.isPresent() && !choque.get().getId().equals(id)) {
                 throw new ConflictException("Otro vuelo ya usa ese id_vuelo y fecha");
@@ -86,12 +86,11 @@ public class VueloService {
         // merge de campos permitidos
         if (request.getIdVuelo() != null) actual.setIdVuelo(request.getIdVuelo());
         if (request.getAerolinea() != null) actual.setAerolinea(request.getAerolinea());
-        if (request.getFecha() != null) actual.setFecha(request.getFecha());
         if (request.getOrigen() != null) actual.setOrigen(request.getOrigen().toUpperCase());
         if (request.getDestino() != null) actual.setDestino(request.getDestino().toUpperCase());
         if (request.getPrecio() != null) actual.setPrecio(request.getPrecio());
-        if (request.getHoraDespegueUtc() != null) actual.setHoraDespegueUtc(request.getHoraDespegueUtc());
-        if (request.getHoraAterrizajeLocal() != null) actual.setHoraAterrizajeLocal(request.getHoraAterrizajeLocal());
+        if (request.getDespegue() != null) actual.setDespegue(request.getDespegue());
+        if (request.getAterrizajeLocal() != null) actual.setAterrizajeLocal(request.getAterrizajeLocal());
         if (request.getEstadoVuelo() != null) actual.setEstadoVuelo(request.getEstadoVuelo());
         if (request.getTipoAvion() != null) actual.setTipoAvion(request.getTipoAvion());
         //if (request.getDisponibilidad() != null) actual.setDisponibilidad(request.getDisponibilidad());
@@ -244,13 +243,11 @@ public class VueloService {
             throw new BadRequestException("origen debe ser código IATA de 3 letras");
         if (v.getDestino() == null || v.getDestino().length() != 3)
             throw new BadRequestException("destino debe ser código IATA de 3 letras");
-        if (v.getFecha() == null)
-            throw new BadRequestException("fecha es obligatoria");
-        if (v.getFecha().isBefore(LocalDate.now()))
+        if (v.getDespegue().toLocalDate().isBefore(LocalDate.now()))
             throw new BadRequestException("La fecha del vuelo no puede ser anterior a hoy");
         if (v.getPrecio() == null || menorQueCero(v.getPrecio()))
             throw new BadRequestException("precio debe ser >= 0");
-        if (v.getHoraDespegueUtc() == null || v.getHoraAterrizajeLocal() == null)
+        if (v.getDespegue() == null || v.getDespegue() == null)
             throw new BadRequestException("horas de despegue y aterrizaje son obligatorias");
         if (v.getEstadoVuelo() == null)
             throw new BadRequestException("estado_vuelo es obligatorio");
@@ -261,7 +258,7 @@ public class VueloService {
             throw new BadRequestException("origen debe ser código IATA de 3 letras");
         if (v.getDestino() != null && v.getDestino().length() != 3)
             throw new BadRequestException("destino debe ser código IATA de 3 letras");
-        if (v.getFecha() != null && v.getFecha().isBefore(LocalDate.now()))
+        if (v.getDespegue() != null && v.getDespegue().toLocalDate().isBefore(LocalDate.now()))
             throw new BadRequestException("La fecha del vuelo no puede ser anterior a hoy");
         if (v.getPrecio() != null && menorQueCero(v.getPrecio()))
             throw new BadRequestException("precio debe ser >= 0");
