@@ -202,14 +202,19 @@ public class VueloService {
         if (precioMin != null && precioMax != null && precioMin.compareTo(precioMax) > 0)
             throw new BadRequestException("precioMin no puede ser mayor que precioMax");
 
-        // 👇 clave: forzar el tipo genérico
         Specification<Vuelo> spec = Specification.<Vuelo>where(null)
+            // Rango por despegue (timestamptz)
             .and((root, cq, cb) -> {
                 if (fechaDesde == null && fechaHasta == null) return null;
-                var path = root.<LocalDate>get("fecha");
-                if (fechaDesde != null && fechaHasta != null) return cb.between(path, fechaDesde, fechaHasta);
-                if (fechaDesde != null) return cb.greaterThanOrEqualTo(path, fechaDesde);
-                return cb.lessThanOrEqualTo(path, fechaHasta);
+                var path = root.<OffsetDateTime>get("despegue");
+                if (fechaDesde != null && fechaHasta != null) {
+                    return cb.and(
+                        cb.greaterThanOrEqualTo(path, startOfDayUtc(fechaDesde)),
+                        cb.lessThan(path, nextDayUtc(fechaHasta))
+                    );
+                }
+                if (fechaDesde != null) return cb.greaterThanOrEqualTo(path, startOfDayUtc(fechaDesde));
+                return cb.lessThan(path, nextDayUtc(fechaHasta));
             })
             .and(ciLike("aerolinea", aerolineaNorm))
             .and((root, cq, cb) -> origenNorm == null ? null :
@@ -223,6 +228,7 @@ public class VueloService {
 
         return vueloRepository.findAll(spec, pageable);
     }
+
 
     /* 
     @org.springframework.transaction.annotation.Transactional
