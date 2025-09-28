@@ -38,22 +38,22 @@ public interface VueloRepository extends JpaRepository<Vuelo, Integer>, JpaSpeci
      *  - si contiene "airbus" -> tipo_avion='A320', capacidad_avion=288
      * Devuelve la cantidad de filas afectadas.
      */
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying
     @Query(value = """
         UPDATE public.vuelo
         SET
-          tipo_avion = CASE
+            tipo_avion = CASE
             WHEN lower(tipo_avion) LIKE '%boeing%' THEN 'B737'
             WHEN lower(tipo_avion) LIKE '%airbus%' THEN 'A320'
             ELSE tipo_avion
-          END,
-          capacidad_avion = CASE
+            END,
+            capacidad_avion = CASE
             WHEN lower(tipo_avion) LIKE '%boeing%' THEN 180
             WHEN lower(tipo_avion) LIKE '%airbus%' THEN 288
             ELSE capacidad_avion
-          END
+            END
         WHERE lower(tipo_avion) LIKE '%boeing%'
-           OR lower(tipo_avion) LIKE '%airbus%';
+            OR lower(tipo_avion) LIKE '%airbus%';
         """, nativeQuery = true)
     int normalizeTiposAvionMasivo();
 }
