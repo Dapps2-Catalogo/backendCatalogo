@@ -2,7 +2,6 @@ package com.example.demo.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
@@ -223,6 +222,11 @@ public class VueloService {
                     cb.lessThanOrEqualTo(root.get("precio"), precioMax));
 
         return vueloRepository.findAll(spec, pageable);
+    }
+
+
+    public void normalizaciones (){
+        vueloRepository.normalizeTiposAvionMasivo();
     }
     
 
