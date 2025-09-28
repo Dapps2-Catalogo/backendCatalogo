@@ -101,12 +101,12 @@ public class VueloController {
         return vueloService.buscarVuelosPaginado(fechaDesde, fechaHasta, aerolinea, origen, destino, precioMin, precioMax, pageable);
     }
 
-
+    /* 
     @PostMapping("/normalizar")
     public void postMethodName() {
         vueloService.normalizaciones();
     }
-    
+    */
     
 
     

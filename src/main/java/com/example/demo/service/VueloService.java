@@ -224,11 +224,12 @@ public class VueloService {
         return vueloRepository.findAll(spec, pageable);
     }
 
+    /* 
     @org.springframework.transaction.annotation.Transactional
     public void normalizaciones (){
         vueloRepository.normalizeTiposAvionMasivo();
     }
-    
+    */
 
 
 

@@ -5,8 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+//import org.springframework.data.jpa.repository.Modifying;
+//import org.springframework.data.jpa.repository.Query;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -38,6 +38,7 @@ public interface VueloRepository extends JpaRepository<Vuelo, Integer>, JpaSpeci
      *  - si contiene "airbus" -> tipo_avion='A320', capacidad_avion=288
      * Devuelve la cantidad de filas afectadas.
      */
+    /* 
     @Modifying
     @Query(value = """
         UPDATE public.vuelo
@@ -56,5 +57,6 @@ public interface VueloRepository extends JpaRepository<Vuelo, Integer>, JpaSpeci
             OR lower(tipo_avion) LIKE '%airbus%';
         """, nativeQuery = true)
     int normalizeTiposAvionMasivo();
+    */
 }
 
