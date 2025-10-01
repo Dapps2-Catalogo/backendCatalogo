@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -178,6 +180,18 @@ public class VueloServiceTest {
     }
 
     @Test
+    void testFindByOrigenAndDestinoAndFecha_CodigoInvalido() {
+        assertThrows(BadRequestException.class, () ->
+                vueloService.findByOrigenAndDestinoAndFecha("MA", "EZE", LocalDate.now().plusDays(1), Pageable.unpaged()));
+    }
+
+    @Test
+    void testFindByOrigenAndDestinoAndFecha_FechaPasada() {
+        assertThrows(BadRequestException.class, () ->
+                vueloService.findByOrigenAndDestinoAndFecha("MAD", "EZE", LocalDate.now().minusDays(1), Pageable.unpaged()));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void testBuscarVuelosPaginado() {
         Pageable pageable = Pageable.unpaged();
@@ -189,6 +203,29 @@ public class VueloServiceTest {
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
         verify(vueloRepository, times(1)).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void testBuscarPorRango_Success() {
+        Pageable pageable = Pageable.unpaged();
+        Page<Vuelo> page = new PageImpl<>(Arrays.asList(vuelo));
+        LocalDate desde = LocalDate.now().plusDays(1);
+        LocalDate hasta = desde.plusDays(3);
+
+        when(vueloRepository.findByOrigenAndDestinoAndDespegueBetween(anyString(), anyString(), any(OffsetDateTime.class), any(OffsetDateTime.class), eq(pageable)))
+                .thenReturn(page);
+
+        Page<Vuelo> resultado = vueloService.buscarPorRango("mad", "eze", desde, hasta, pageable);
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getTotalElements());
+
+        ArgumentCaptor<OffsetDateTime> desdeCaptor = ArgumentCaptor.forClass(OffsetDateTime.class);
+        ArgumentCaptor<OffsetDateTime> hastaCaptor = ArgumentCaptor.forClass(OffsetDateTime.class);
+
+        verify(vueloRepository).findByOrigenAndDestinoAndDespegueBetween(eq("MAD"), eq("EZE"), desdeCaptor.capture(), hastaCaptor.capture(), eq(pageable));
+        assertEquals(desde.atStartOfDay().atOffset(ZoneOffset.UTC), desdeCaptor.getValue());
+        assertEquals(hasta.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC), hastaCaptor.getValue());
     }
 
     @Test
@@ -215,6 +252,32 @@ public class VueloServiceTest {
         invalidVuelo.setIdVuelo("OK");
         invalidVuelo.setAerolinea("OK");
         invalidVuelo.setOrigen("INVALID"); // más de 3 caracteres
+        assertThrows(BadRequestException.class, () -> vueloService.createVuelo(invalidVuelo));
+    }
+
+    @Test
+    void testCreateVuelo_InvalidDestino() {
+        Vuelo invalidVuelo = buildVueloValido();
+        invalidVuelo.setDestino("BA" );
+
+        assertThrows(BadRequestException.class, () -> vueloService.createVuelo(invalidVuelo));
+    }
+
+    @Test
+    void testCreateVuelo_FechaPasada() {
+        Vuelo invalidVuelo = buildVueloValido();
+        OffsetDateTime pasado = OffsetDateTime.now().minusDays(2);
+        invalidVuelo.setDespegue(pasado);
+        invalidVuelo.setAterrizajeLocal(pasado.plusHours(2));
+
+        assertThrows(BadRequestException.class, () -> vueloService.createVuelo(invalidVuelo));
+    }
+
+    @Test
+    void testCreateVuelo_PrecioNegativo() {
+        Vuelo invalidVuelo = buildVueloValido();
+        invalidVuelo.setPrecio(new BigDecimal("-10"));
+
         assertThrows(BadRequestException.class, () -> vueloService.createVuelo(invalidVuelo));
     }
 
@@ -273,5 +336,22 @@ public class VueloServiceTest {
          assertThrows(BadRequestException.class, () -> {
             vueloService.buscarVuelosPaginado(LocalDate.now().plusDays(2), LocalDate.now().plusDays(1), null, null, null, null, null, Pageable.unpaged());
         });
+    }
+
+    private Vuelo buildVueloValido() {
+        Vuelo nuevo = new Vuelo();
+        nuevo.setIdVuelo("UX321");
+        nuevo.setAerolinea("Iberia");
+        nuevo.setOrigen("MAD");
+        nuevo.setDestino("EZE");
+        OffsetDateTime futuro = OffsetDateTime.now().plusDays(5);
+        nuevo.setDespegue(futuro);
+        nuevo.setAterrizajeLocal(futuro.plusHours(12));
+        nuevo.setPrecio(BigDecimal.TEN);
+        nuevo.setMoneda("USD");
+        nuevo.setEstadoVuelo(EstadoVuelo.CONFIRMADO);
+        nuevo.setTipoAvion("A320");
+        nuevo.setCapacidadAvion(180);
+        return nuevo;
     }
 }
