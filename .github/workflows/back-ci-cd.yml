@@ -53,14 +53,10 @@ jobs:
       - name: Install Railway CLI
         run: npm i -g @railway/cli
 
-      - name: Auth Railway (non-interactive)
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          echo "$RAILWAY_TOKEN" | railway login
-
+      # La CLI usa RAILWAY_TOKEN del entorno, no hace falta 'login'
       - name: Deploy backend to Railway
         env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
         run: |
           railway up --service "$RAILWAY_SERVICE_ID" --detach || \
