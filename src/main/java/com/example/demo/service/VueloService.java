@@ -31,6 +31,8 @@ public class VueloService {
     }
     @Autowired
     VueloRepository vueloRepository;
+    @Autowired
+    private FlightEventProducer eventProducer;
 
     @Transactional
     public Vuelo createVuelo(Vuelo vuelo) {
@@ -53,7 +55,12 @@ public class VueloService {
             throw new ConflictException("Ya existe un vuelo con ese id_vuelo en esa fecha");
         }
 
-        return vueloRepository.save(vuelo);
+        Vuelo saved = vueloRepository.save(vuelo);
+
+        // 🔹 Emitir evento "flights.flight.created"
+        eventProducer.sendFlightCreated(saved);
+
+        return saved;
     }
 
     @Transactional
@@ -107,7 +114,17 @@ public class VueloService {
         
         //if (request.getDisponibilidad() != null) actual.setDisponibilidad(request.getDisponibilidad());
 
-        return vueloRepository.save(actual);
+        Vuelo saved = vueloRepository.save(actual);
+
+        // 🔹 Emitir evento "flights.flight.updated"
+        eventProducer.sendFlightUpdated(saved, saved.getEstadoVuelo().name());
+
+        // 🔹 Si cambió tipo de avión, capacidad o aerolínea, emití "aircraft_or_airline.updated"
+        if (request.getTipoAvion() != null || request.getCapacidadAvion() != null || request.getAerolinea() != null) {
+            eventProducer.sendAircraftOrAirlineUpdated(saved);
+        }
+
+        return saved;
     }
 
     @Transactional(Transactional.TxType.SUPPORTS)
