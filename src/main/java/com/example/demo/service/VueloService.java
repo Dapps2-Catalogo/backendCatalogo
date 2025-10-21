@@ -17,6 +17,7 @@ import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.exceptions.ConflictException;
 import com.example.demo.models.Vuelo;
 import com.example.demo.repositories.VueloRepository;
+
 import jakarta.transaction.Transactional;
 
 
@@ -32,14 +33,17 @@ public class VueloService {
     @Autowired
     VueloRepository vueloRepository;
     @Autowired
-    private FlightEventProducer eventProducer;
+    private HttpEventPublisher eventPublisher;
 
     @Transactional
     public Vuelo createVuelo(Vuelo vuelo) {
         validarNuevoVuelo(vuelo);
-        if (vueloRepository.existsByIdVuelo(vuelo.getIdVuelo())) {
-            throw new ConflictException("Ya existe un vuelo con id " + vuelo.getIdVuelo());
+        if (vueloRepository.existsByIdVueloAndOrigen(vuelo.getIdVuelo(), vuelo.getOrigen())) {
+            throw new ConflictException(
+                "Ya existe un vuelo con id " + vuelo.getIdVuelo() + " desde el origen " + vuelo.getOrigen()
+            );
         }
+
         // normalizaciones mínimas
         vuelo.setOrigen(vuelo.getOrigen().toUpperCase());
         vuelo.setDestino(vuelo.getDestino().toUpperCase());
@@ -49,7 +53,7 @@ public class VueloService {
         }
 
         */
-
+        
         // conflicto: mismo idVuelo + fecha
         if (vueloRepository.existsByIdVueloAndDespegue(vuelo.getIdVuelo(), vuelo.getDespegue())) {
             throw new ConflictException("Ya existe un vuelo con ese id_vuelo en esa fecha");
@@ -58,7 +62,12 @@ public class VueloService {
         Vuelo saved = vueloRepository.save(vuelo);
 
         // 🔹 Emitir evento "flights.flight.created"
-        eventProducer.sendFlightCreated(saved);
+        try {
+            eventPublisher.publishFlightCreated(saved,null);
+            System.out.println("Evento de creación publicado para vuelo id " + saved.getId());
+        } catch (Exception e) {
+            System.err.println("Error publicando evento de creacion: " + e.getMessage());
+        }
 
         return saved;
     }
@@ -114,17 +123,16 @@ public class VueloService {
         
         //if (request.getDisponibilidad() != null) actual.setDisponibilidad(request.getDisponibilidad());
 
-        Vuelo saved = vueloRepository.save(actual);
+        Vuelo guardado = vueloRepository.save(actual);
 
-        // 🔹 Emitir evento "flights.flight.updated"
-        eventProducer.sendFlightUpdated(saved, saved.getEstadoVuelo().name());
-
-        // 🔹 Si cambió tipo de avión, capacidad o aerolínea, emití "aircraft_or_airline.updated"
-        if (request.getTipoAvion() != null || request.getCapacidadAvion() != null || request.getAerolinea() != null) {
-            eventProducer.sendAircraftOrAirlineUpdated(saved);
+        try {
+            eventPublisher.publishFlightUpdated(guardado, null);
+            System.out.println("Evento de actualización publicado para vuelo id " + guardado.getId());
+        } catch (Exception e) {
+            System.err.println("Error publicando evento de actualización: " + e.getMessage());
         }
 
-        return saved;
+        return guardado;
     }
 
     @Transactional(Transactional.TxType.SUPPORTS)

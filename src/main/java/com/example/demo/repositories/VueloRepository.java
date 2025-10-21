@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 //import org.springframework.data.jpa.repository.Modifying;
 //import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
@@ -18,7 +19,7 @@ public interface VueloRepository extends JpaRepository<Vuelo, Integer>, JpaSpeci
     // Unicidad compuesta (id_vuelo, despegue)
     boolean existsByIdVueloAndDespegue(String idVuelo, OffsetDateTime despegue);
     Optional<Vuelo> findByIdVueloAndDespegue(String idVuelo, OffsetDateTime despegue);
-
+    boolean existsByIdVueloAndOrigen(String idVuelo, String origen);
     
 
     // Búsqueda por rango de despegue (usar para “por fecha” convirtiendo a [00:00, 24:00))

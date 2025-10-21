@@ -5,17 +5,26 @@ import org.springframework.stereotype.Component;
 
 /**
  * Listener simple para debug.
- * Escucha los mensajes publicados en el topic flights.events
- * y los imprime por consola.
+ * Escucha mensajes publicados en topics relevantes y los imprime.
  */
 @Component
 public class DemoListener {
 
-    @KafkaListener(topics = "flights.events", groupId = "flights-catalog-debug")
-    public void onMessage(String message) {
+    // 🔹 Escucha los eventos directos del dominio Flights
+    @KafkaListener(topics = "flights.events", groupId = "flights-catalog-debug", properties = { "auto.offset.reset=latest" })
+    public void onFlightsEvents(String message) {
         System.out.println("📩 [Kafka] Mensaje recibido en flights.events:");
         System.out.println(message);
         System.out.println("------------------------------------------------------");
     }
+
+    // 🔹 Escucha los mensajes que se envían al hub (core.ingress)
+    @KafkaListener(topics = "core.ingress", groupId = "flights-catalog-debug-ingress", properties = { "auto.offset.reset=latest" })
+    public void onCoreIngress(String message) {
+        System.out.println("🌐 [Kafka] Mensaje recibido en core.ingress (hub):");
+        System.out.println(message);
+        System.out.println("------------------------------------------------------");
+    }
 }
+
 

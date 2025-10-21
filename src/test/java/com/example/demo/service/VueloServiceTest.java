@@ -53,7 +53,7 @@ public class VueloServiceTest {
     vuelo.setAterrizajeLocal(despegue.plusHours(12));
         vuelo.setPrecio(new BigDecimal("500.00"));
     vuelo.setMoneda("USD");
-        vuelo.setEstadoVuelo(EstadoVuelo.CONFIRMADO);
+        vuelo.setEstadoVuelo(EstadoVuelo.EN_HORA);
         vuelo.setTipoAvion("A350");
         vuelo.setCapacidadAvion(300);
     }
@@ -146,7 +146,7 @@ public class VueloServiceTest {
     void testUpdateVuelo_WhenCancelled() {
         vuelo.setEstadoVuelo(EstadoVuelo.CANCELADO);
         Vuelo request = new Vuelo();
-        request.setEstadoVuelo(EstadoVuelo.CONFIRMADO);
+        request.setEstadoVuelo(EstadoVuelo.CANCELADO);
 
         when(vueloRepository.findById(1)).thenReturn(Optional.of(vuelo));
 
@@ -349,7 +349,7 @@ public class VueloServiceTest {
         nuevo.setAterrizajeLocal(futuro.plusHours(12));
         nuevo.setPrecio(BigDecimal.TEN);
         nuevo.setMoneda("USD");
-        nuevo.setEstadoVuelo(EstadoVuelo.CONFIRMADO);
+        nuevo.setEstadoVuelo(EstadoVuelo.EN_HORA);
         nuevo.setTipoAvion("A320");
         nuevo.setCapacidadAvion(180);
         return nuevo;

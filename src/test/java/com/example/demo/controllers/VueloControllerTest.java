@@ -63,7 +63,7 @@ class VueloControllerTest {
         vuelo.setMoneda("USD");
         vuelo.setDespegue(despegue);
         vuelo.setAterrizajeLocal(despegue.plusHours(12));
-        vuelo.setEstadoVuelo(EstadoVuelo.CONFIRMADO);
+        vuelo.setEstadoVuelo(EstadoVuelo.EN_HORA);
         vuelo.setCapacidadAvion(300);
         vuelo.setTipoAvion("A350");
     }
