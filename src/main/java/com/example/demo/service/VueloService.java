@@ -34,36 +34,35 @@ public class VueloService {
     VueloRepository vueloRepository;
     @Autowired
     private HttpEventPublisher eventPublisher;
+    @Autowired
+    private FlightCodeService flightCodeService;
 
     @Transactional
     public Vuelo createVuelo(Vuelo vuelo) {
         validarNuevoVuelo(vuelo);
-        if (vueloRepository.existsByIdVueloAndOrigen(vuelo.getIdVuelo(), vuelo.getOrigen())) {
-            throw new ConflictException(
-                "Ya existe un vuelo con id " + vuelo.getIdVuelo() + " desde el origen " + vuelo.getOrigen()
-            );
-        }
 
-        // normalizaciones mínimas
+        // Normalizaciones mínimas
         vuelo.setOrigen(vuelo.getOrigen().toUpperCase());
         vuelo.setDestino(vuelo.getDestino().toUpperCase());
-        /* 
-        if (vuelo.getDisponibilidad() == null) {
-            vuelo.setDisponibilidad(Collections.emptyList());
-        }
 
-        */
-        
-        // conflicto: mismo idVuelo + fecha
+        // 1) Tomamos el prefijo que viene del front (ej: "AF")
+        String airlinePrefix = vuelo.getIdVuelo();
+
+        // 2) Generamos el código final y lo seteamos (AF0001, AF0002...)
+        String generated = flightCodeService.nextFlightCode(airlinePrefix);
+        vuelo.setIdVuelo(generated);
+
+        // 3) (Opcional) si tu regla de unicidad es idVuelo + despegue:
         if (vueloRepository.existsByIdVueloAndDespegue(vuelo.getIdVuelo(), vuelo.getDespegue())) {
             throw new ConflictException("Ya existe un vuelo con ese id_vuelo en esa fecha");
         }
 
+        // 4) Guardar
         Vuelo saved = vueloRepository.save(vuelo);
 
-        // 🔹 Emitir evento "flights.flight.created"
+        // 5) Emitir evento
         try {
-            eventPublisher.publishFlightCreated(saved,null);
+            eventPublisher.publishFlightCreated(saved, null);
             System.out.println("Evento de creación publicado para vuelo id " + saved.getId());
         } catch (Exception e) {
             System.err.println("Error publicando evento de creacion: " + e.getMessage());
@@ -71,6 +70,8 @@ public class VueloService {
 
         return saved;
     }
+
+
 
     @Transactional
     public void deleteVuelo(Integer id) {

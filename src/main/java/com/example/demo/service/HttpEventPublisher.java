@@ -3,7 +3,6 @@ package com.example.demo.service;
 import com.example.demo.models.Vuelo;
 import com.example.demo.auxiliar.EstadoVuelo;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
@@ -155,7 +154,7 @@ public class HttpEventPublisher {
 
     // ====================== Helpers ======================
 
-    
+    /* 
     private String buildFlightId(Vuelo v) {
         // FL-YYYYMMDD-<idVuelo>
         String yyyyMMdd = (v.getDespegue() != null)
@@ -163,6 +162,8 @@ public class HttpEventPublisher {
                 : "NA";
         return "FL-" + yyyyMMdd + "-" + safe(v.getIdVuelo());
     }
+        
+    */
 
     private String buildIdempotencyKeyForCreate(Vuelo v) {
         // Determinística para "create" en base a tu unique (id_vuelo + despegue)
