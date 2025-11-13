@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.auxiliar.EstadoVuelo;
 import com.example.demo.exceptions.BadRequestException;
@@ -52,12 +54,15 @@ public class VueloService {
         String generated = flightCodeService.nextFlightCode(airlinePrefix);
         vuelo.setIdVuelo(generated);
 
-        // 3) (Opcional) si tu regla de unicidad es idVuelo + despegue:
-        if (vueloRepository.existsByIdVueloAndDespegue(vuelo.getIdVuelo(), vuelo.getDespegue())) {
+        // 3) Regla de unicidad
+        if (vueloRepository.existsByIdVueloAndDespegue(
+                vuelo.getIdVuelo(),
+                vuelo.getDespegue()
+        )) {
             throw new ConflictException("Ya existe un vuelo con ese id_vuelo en esa fecha");
         }
 
-        // 4) Guardar
+        // 4) Guardar en DB (dentro de la transacción)
         Vuelo saved = vueloRepository.save(vuelo);
 
         // 5) Emitir evento
@@ -65,9 +70,16 @@ public class VueloService {
             eventPublisher.publishFlightCreated(saved, null);
             System.out.println("Evento de creación publicado para vuelo id " + saved.getId());
         } catch (Exception e) {
-            System.err.println("Error publicando evento de creacion: " + e.getMessage());
+            System.err.println("Error publicando evento de creación: " + e.getMessage());
+            // RuntimeException -> la @Transactional hace rollback
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "No se pudo publicar el evento de creación en el core, se revierte el alta del vuelo",
+                    e
+            );
         }
 
+        // Si llegamos acá, todo ok: DB + evento publicado
         return saved;
     }
 

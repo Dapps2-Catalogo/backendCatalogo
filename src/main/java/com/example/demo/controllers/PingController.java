@@ -10,11 +10,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 
+
+
+
+
 @RestController
 @RequestMapping("/ping")
 @CrossOrigin(origins = "*")
 public class PingController {
 
+    
 
     @GetMapping()
     public String ping() {
