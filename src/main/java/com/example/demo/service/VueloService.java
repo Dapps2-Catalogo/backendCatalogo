@@ -142,7 +142,11 @@ public class VueloService {
             eventPublisher.publishFlightUpdated(guardado, null);
             System.out.println("Evento de actualización publicado para vuelo id " + guardado.getId());
         } catch (Exception e) {
-            System.err.println("Error publicando evento de actualización: " + e.getMessage());
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "No se pudo publicar el evento de creación en el core, se revierte el alta del vuelo",
+                    e
+            );
         }
 
         return guardado;
