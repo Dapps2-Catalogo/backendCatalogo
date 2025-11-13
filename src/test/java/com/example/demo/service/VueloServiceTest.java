@@ -35,6 +35,12 @@ public class VueloServiceTest {
     @Mock
     private VueloRepository vueloRepository;
 
+    @Mock
+    private FlightCodeService flightCodeService;
+
+    @Mock
+    private HttpEventPublisher eventPublisher;
+
     @InjectMocks
     private VueloService vueloService;
 
@@ -59,39 +65,44 @@ public class VueloServiceTest {
     }
 
     @Test
-    void testCreateVuelo_Success() {
-        when(vueloRepository.existsByIdVuelo(anyString())).thenReturn(false);
-        when(vueloRepository.existsByIdVueloAndDespegue(anyString(), any(OffsetDateTime.class))).thenReturn(false);
-        when(vueloRepository.save(any(Vuelo.class))).thenReturn(vuelo);
+    void testCreateVuelo_Success() throws Exception {
+        OffsetDateTime despegue = vuelo.getDespegue();
+        when(flightCodeService.nextFlightCode("IB123")).thenReturn("IB9001");
+        when(vueloRepository.existsByIdVueloAndDespegue("IB9001", despegue)).thenReturn(false);
+        when(vueloRepository.save(any(Vuelo.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(eventPublisher.publishFlightCreated(any(Vuelo.class), isNull())).thenReturn("ok");
 
         Vuelo createdVuelo = vueloService.createVuelo(vuelo);
 
         assertNotNull(createdVuelo);
-        assertEquals(vuelo.getIdVuelo(), createdVuelo.getIdVuelo());
-        verify(vueloRepository, times(1)).save(any(Vuelo.class));
+        assertEquals("IB9001", createdVuelo.getIdVuelo());
+        verify(vueloRepository).save(any(Vuelo.class));
+        verify(eventPublisher).publishFlightCreated(any(Vuelo.class), isNull());
     }
 
     @Test
-    void testCreateVuelo_ConflictById() {
-        when(vueloRepository.existsByIdVuelo(anyString())).thenReturn(true);
-        
-        assertThrows(ConflictException.class, () -> {
-            vueloService.createVuelo(vuelo);
-        });
+    void testCreateVuelo_ConflictById() throws Exception {
+        OffsetDateTime despegue = vuelo.getDespegue();
+        when(flightCodeService.nextFlightCode("IB123")).thenReturn("IB123");
+        when(vueloRepository.existsByIdVueloAndDespegue("IB123", despegue)).thenReturn(true);
+
+        assertThrows(ConflictException.class, () -> vueloService.createVuelo(vuelo));
 
         verify(vueloRepository, never()).save(any(Vuelo.class));
+        verify(eventPublisher, never()).publishFlightCreated(any(Vuelo.class), any());
     }
     
     @Test
-    void testCreateVuelo_ConflictByIdAndDespegue() {
-        when(vueloRepository.existsByIdVuelo(anyString())).thenReturn(false);
-        when(vueloRepository.existsByIdVueloAndDespegue(anyString(), any(OffsetDateTime.class))).thenReturn(true);
+    void testCreateVuelo_ConflictByIdAndDespegue() throws Exception {
+        vuelo.setIdVuelo("ib123");
+        OffsetDateTime despegue = vuelo.getDespegue();
+        when(flightCodeService.nextFlightCode("ib123")).thenReturn("IB123");
+        when(vueloRepository.existsByIdVueloAndDespegue("IB123", despegue)).thenReturn(true);
 
-        assertThrows(ConflictException.class, () -> {
-            vueloService.createVuelo(vuelo);
-        });
+        assertThrows(ConflictException.class, () -> vueloService.createVuelo(vuelo));
 
         verify(vueloRepository, never()).save(any(Vuelo.class));
+        verify(eventPublisher, never()).publishFlightCreated(any(Vuelo.class), any());
     }
 
     @Test
