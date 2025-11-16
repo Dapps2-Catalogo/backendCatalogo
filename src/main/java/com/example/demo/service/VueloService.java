@@ -315,6 +315,8 @@ public class VueloService {
             throw new BadRequestException("horas de despegue y aterrizaje son obligatorias");
         if (v.getEstadoVuelo() == null)
             throw new BadRequestException("estado_vuelo es obligatorio");
+        if (v.getPrecio().compareTo(BigDecimal.valueOf(100000000)) > 0)
+            throw new BadRequestException("El valor del vuelo es demasiado alto");
     }
 
     private void validarCamposEditables(Vuelo v) {
