@@ -47,4 +47,12 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponse(ex.getMessage(), 401));
     }
+    
+    @ExceptionHandler(UnprocessableEntityException.class)
+    public ResponseEntity<ErrorResponse> handleUnprocessable(UnprocessableEntityException ex) {
+        return ResponseEntity
+                .status(422)
+                .body(new ErrorResponse(ex.getMessage(), 422));
+    }
+
 }
