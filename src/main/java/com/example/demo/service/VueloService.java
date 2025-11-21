@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.demo.auxiliar.EstadoVuelo;
 import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.exceptions.ConflictException;
+import com.example.demo.exceptions.UnprocessableEntityException;
 import com.example.demo.models.Vuelo;
 import com.example.demo.repositories.VueloRepository;
 
@@ -316,7 +317,8 @@ public class VueloService {
         if (v.getEstadoVuelo() == null)
             throw new BadRequestException("estado_vuelo es obligatorio");
         if (v.getPrecio().compareTo(BigDecimal.valueOf(100000000)) > 0)
-            throw new BadRequestException("El valor del vuelo es demasiado alto");
+            throw new UnprocessableEntityException("El valor del vuelo es demasiado alto");
+        
     }
 
     private void validarCamposEditables(Vuelo v) {
